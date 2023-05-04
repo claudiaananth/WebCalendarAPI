@@ -158,7 +158,7 @@ namespace WebCalendarAPI.Controllers
             }
 
             [HttpPatch(Name = "PatchCalendarEvents")]
-            public async Task<List<Events>> Patch(EventsPatchInputs input)
+            public async Task<List<Events>> Patch(EventsPutInputs input)
             {
                 var events = await (from e in _dbContext.Events
                                     join g in _dbContext.Groups on e.GroupId equals g.Id
@@ -178,6 +178,20 @@ namespace WebCalendarAPI.Controllers
 
                 foreach (var data in events.groups)
                 {
+
+                    if (data.Id == input.EventId)
+                    {
+                        var user = await _dbContext.Users
+                            .Where(Q => Q.Email == input.Email)
+                            .FirstOrDefaultAsync();
+
+                        if (user == null)
+                        {
+                            throw new Exception("User Not Found");
+                        }
+
+                        data.UserId = user.Id;
+                    }
 
                     var checkExisting = await _calendarService.CheckTiming(data.UserId, input.StartDate, input.EndDate);
 
